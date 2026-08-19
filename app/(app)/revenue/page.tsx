@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { subscribeClients, subscribeInvoices } from "@/lib/firestore";
+import { getClients, getInvoices } from "@/lib/data";
 import type { Client, Invoice } from "@/lib/types";
 import { invoiceTotal } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
@@ -21,8 +21,8 @@ export default function RevenuePage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
-    const unsubs = [subscribeClients(setClients), subscribeInvoices(setInvoices)];
-    return () => unsubs.forEach((u) => u());
+    getClients().then(setClients);
+    getInvoices().then(setInvoices);
   }, []);
 
   const rows = useMemo(

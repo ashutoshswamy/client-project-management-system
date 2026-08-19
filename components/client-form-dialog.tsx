@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { addClient, updateClient } from "@/lib/firestore";
+import { addClient, updateClient } from "@/lib/data";
 import type { Client, ClientInput } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -23,9 +23,11 @@ const empty: ClientInput = { name: "", email: "", phone: "", company: "", addres
 export function ClientFormDialog({
   client,
   trigger,
+  onSaved,
 }: {
   client?: Client;
   trigger: React.ReactNode;
+  onSaved?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<ClientInput>(client ?? empty);
@@ -47,6 +49,7 @@ export function ClientFormDialog({
         await addClient(form);
         toast.success("Client added");
       }
+      onSaved?.();
       setOpen(false);
     } catch {
       toast.error("Something went wrong");

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { subscribeClients, subscribeProjects, subscribeInvoices, addInvoice } from "@/lib/firestore";
+import { getClients, getProjects, getInvoices, addInvoice } from "@/lib/data";
 import type { Client, Project, Invoice, InvoiceItem } from "@/lib/types";
 import { invoiceTotal } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,12 +37,9 @@ function NewInvoiceForm() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
-    const unsubs = [
-      subscribeClients(setClients),
-      subscribeProjects(setProjects),
-      subscribeInvoices(setInvoices),
-    ];
-    return () => unsubs.forEach((u) => u());
+    getClients().then(setClients);
+    getProjects().then(setProjects);
+    getInvoices().then(setInvoices);
   }, []);
 
   const initialProjectId = searchParams.get("projectId") ?? "";

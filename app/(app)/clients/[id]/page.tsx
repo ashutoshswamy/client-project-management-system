@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { subscribeClients, subscribeProjects, subscribeInvoices } from "@/lib/firestore";
+import { getClients, getProjects, getInvoices } from "@/lib/data";
 import type { Client, Project, Invoice } from "@/lib/types";
 import { invoiceTotal } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,13 +20,14 @@ export default function ClientDetailPage(props: PageProps<"/clients/[id]">) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
+  const refresh = () => {
+    getClients().then(setClients);
+    getProjects().then(setProjects);
+    getInvoices().then(setInvoices);
+  };
+
   useEffect(() => {
-    const unsubs = [
-      subscribeClients(setClients),
-      subscribeProjects(setProjects),
-      subscribeInvoices(setInvoices),
-    ];
-    return () => unsubs.forEach((u) => u());
+    refresh();
   }, []);
 
   const client = clients.find((c) => c.id === id);
@@ -42,7 +43,11 @@ export default function ClientDetailPage(props: PageProps<"/clients/[id]">) {
           <h1 className="text-2xl font-semibold">{client.name}</h1>
           <p className="text-sm text-muted-foreground">{client.company}</p>
         </div>
-        <ClientFormDialog client={client} trigger={<Button variant="outline">Edit client</Button>} />
+        <ClientFormDialog
+          client={client}
+          trigger={<Button variant="outline">Edit client</Button>}
+          onSaved={refresh}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -71,6 +76,7 @@ export default function ClientDetailPage(props: PageProps<"/clients/[id]">) {
             clients={clients}
             defaultClientId={client.id}
             trigger={<Button size="sm">Add project</Button>}
+            onSaved={refresh}
           />
         </div>
         <div className="flex flex-col gap-2">

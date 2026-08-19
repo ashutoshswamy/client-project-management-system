@@ -14,6 +14,15 @@ export interface Client {
 
 export type ClientInput = Omit<Client, "id" | "createdAt">;
 
+export type CommissionType = "percent" | "fixed";
+
+export interface Commission {
+  id: string;
+  name: string;
+  type: CommissionType;
+  value: number;
+}
+
 export interface Project {
   id: string;
   clientId: string;
@@ -24,10 +33,15 @@ export interface Project {
   startDate: string;
   dueDate: string;
   members: string[];
+  commissions: Commission[];
   createdAt: number;
 }
 
 export type ProjectInput = Omit<Project, "id" | "createdAt">;
+
+export function commissionAmount(commission: Commission, budget: number) {
+  return commission.type === "percent" ? (budget * commission.value) / 100 : commission.value;
+}
 
 export interface InvoiceItem {
   description: string;

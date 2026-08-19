@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateProject } from "@/lib/firestore";
+import { updateProject } from "@/lib/data";
 import type { Project } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-export function ProjectMembers({ project }: { project: Project }) {
+export function ProjectMembers({
+  project,
+  onUpdated,
+}: {
+  project: Project;
+  onUpdated?: () => void;
+}) {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const members = project.members ?? [];
@@ -25,6 +31,7 @@ export function ProjectMembers({ project }: { project: Project }) {
     setSubmitting(true);
     try {
       await updateProject(project.id, { members: [...members, normalized] });
+      onUpdated?.();
       setEmail("");
       toast.success("Invited to project");
     } catch {
@@ -36,6 +43,7 @@ export function ProjectMembers({ project }: { project: Project }) {
 
   async function handleRemove(target: string) {
     await updateProject(project.id, { members: members.filter((m) => m !== target) });
+    onUpdated?.();
   }
 
   return (

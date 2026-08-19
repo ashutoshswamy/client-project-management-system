@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { subscribeClients, subscribeProjects, subscribeInvoices, updateInvoice } from "@/lib/firestore";
+import { getClients, getProjects, getInvoices, updateInvoice } from "@/lib/data";
 import type { Client, Project, Invoice } from "@/lib/types";
 import { invoiceTotal } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -17,13 +17,14 @@ export default function InvoiceDetailPage(props: PageProps<"/invoices/[id]">) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
+  const refresh = () => {
+    getClients().then(setClients);
+    getProjects().then(setProjects);
+    getInvoices().then(setInvoices);
+  };
+
   useEffect(() => {
-    const unsubs = [
-      subscribeClients(setClients),
-      subscribeProjects(setProjects),
-      subscribeInvoices(setInvoices),
-    ];
-    return () => unsubs.forEach((u) => u());
+    refresh();
   }, []);
 
   const invoice = invoices.find((i) => i.id === id);
@@ -38,6 +39,7 @@ export default function InvoiceDetailPage(props: PageProps<"/invoices/[id]">) {
     if (!invoice) return;
     const status = invoice.status === "unpaid" ? "paid" : "unpaid";
     await updateInvoice(invoice.id, { status });
+    await refresh();
     toast.success(`Marked as ${status}`);
   }
 

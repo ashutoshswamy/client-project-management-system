@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { subscribeClients, subscribeProjects, subscribeInvoices } from "@/lib/firestore";
+import { getClients, getProjects, getInvoices } from "@/lib/data";
 import type { Client, Project, Invoice } from "@/lib/types";
 import { invoiceTotal } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,12 +17,9 @@ export default function DashboardPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
-    const unsubs = [
-      subscribeClients(setClients),
-      subscribeProjects(setProjects),
-      subscribeInvoices(setInvoices),
-    ];
-    return () => unsubs.forEach((u) => u());
+    getClients().then(setClients);
+    getProjects().then(setProjects);
+    getInvoices().then(setInvoices);
   }, []);
 
   const ongoing = projects.filter((p) => p.status === "ongoing").length;

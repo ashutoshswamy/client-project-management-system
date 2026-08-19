@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { subscribeUserProfile } from "@/lib/firestore";
+import { getUserProfile } from "@/lib/data";
 import { DEFAULT_CURRENCY } from "@/lib/currency";
 import type { UserProfile } from "@/lib/types";
 
@@ -15,6 +15,7 @@ interface AuthContextValue {
   profile: UserProfile;
   signIn: (email: string, password: string) => Promise<void>;
   signOutUser: () => Promise<void>;
+  setProfile: (profile: UserProfile) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -33,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!user) return;
-    return subscribeUserProfile(user.uid, (p) => setProfile(p ?? defaultProfile));
+    getUserProfile().then((p) => setProfile(p ?? defaultProfile));
   }, [user]);
 
   const effectiveProfile = user ? profile : defaultProfile;
@@ -47,7 +48,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, profile: effectiveProfile, signIn, signOutUser }}>
+    <AuthContext.Provider
+      value={{ user, loading, profile: effectiveProfile, signIn, signOutUser, setProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );

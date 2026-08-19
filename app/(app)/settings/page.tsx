@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { updateProfile } from "firebase/auth";
 import { useAuth } from "@/lib/auth-context";
-import { saveUserProfile } from "@/lib/firestore";
+import { saveUserProfile } from "@/lib/data";
 import { CURRENCIES, DEFAULT_CURRENCY } from "@/lib/currency";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, setProfile } = useAuth();
   const [name, setName] = useState(profile.displayName || user?.displayName || "");
   const [currency, setCurrency] = useState(profile.currency || DEFAULT_CURRENCY);
   const [submitting, setSubmitting] = useState(false);
@@ -24,9 +24,10 @@ export default function SettingsPage() {
     setSubmitting(true);
     try {
       await Promise.all([
-        saveUserProfile(user.uid, { displayName: name, currency }),
+        saveUserProfile({ displayName: name, currency }),
         updateProfile(user, { displayName: name }),
       ]);
+      setProfile({ displayName: name, currency });
       toast.success("Settings saved");
     } catch {
       toast.error("Something went wrong");

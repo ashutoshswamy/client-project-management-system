@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { subscribeClients, subscribeProjects, subscribeInvoices, deleteInvoice } from "@/lib/firestore";
+import { getClients, getProjects, getInvoices, deleteInvoice } from "@/lib/data";
 import type { Client, Project, Invoice } from "@/lib/types";
 import { invoiceTotal } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -24,13 +24,14 @@ export default function InvoicesPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
+  const refresh = () => {
+    getClients().then(setClients);
+    getProjects().then(setProjects);
+    getInvoices().then(setInvoices);
+  };
+
   useEffect(() => {
-    const unsubs = [
-      subscribeClients(setClients),
-      subscribeProjects(setProjects),
-      subscribeInvoices(setInvoices),
-    ];
-    return () => unsubs.forEach((u) => u());
+    refresh();
   }, []);
 
   const clientName = (id: string) => clients.find((c) => c.id === id)?.name ?? "—";
@@ -39,6 +40,7 @@ export default function InvoicesPage() {
   async function handleDelete(id: string) {
     if (!confirm("Delete this invoice?")) return;
     await deleteInvoice(id);
+    await refresh();
     toast.success("Invoice deleted");
   }
 

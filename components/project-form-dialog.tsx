@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addProject, updateProject } from "@/lib/firestore";
+import { addProject, updateProject } from "@/lib/data";
 import type { Client, Project, ProjectInput } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -29,6 +29,7 @@ function emptyForm(clientId?: string): ProjectInput {
     startDate: "",
     dueDate: "",
     members: [],
+    commissions: [],
   };
 }
 
@@ -37,11 +38,13 @@ export function ProjectFormDialog({
   clients,
   defaultClientId,
   trigger,
+  onSaved,
 }: {
   project?: Project;
   clients: Client[];
   defaultClientId?: string;
   trigger: React.ReactNode;
+  onSaved?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<ProjectInput>(project ?? emptyForm(defaultClientId));
@@ -67,6 +70,7 @@ export function ProjectFormDialog({
         await addProject(form);
         toast.success("Project added");
       }
+      onSaved?.();
       setOpen(false);
     } catch {
       toast.error("Something went wrong");

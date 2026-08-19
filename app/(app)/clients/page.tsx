@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { subscribeClients, deleteClient } from "@/lib/firestore";
+import { getClients, deleteClient } from "@/lib/data";
 import type { Client } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,11 +18,16 @@ import { toast } from "sonner";
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
 
-  useEffect(() => subscribeClients(setClients), []);
+  const refresh = () => getClients().then(setClients);
+
+  useEffect(() => {
+    refresh();
+  }, []);
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this client? This does not delete their projects/invoices.")) return;
     await deleteClient(id);
+    await refresh();
     toast.success("Client deleted");
   }
 
@@ -33,7 +38,7 @@ export default function ClientsPage() {
           <h1 className="text-2xl font-semibold">Clients</h1>
           <p className="text-sm text-muted-foreground">Manage your client records.</p>
         </div>
-        <ClientFormDialog trigger={<Button>Add client</Button>} />
+        <ClientFormDialog trigger={<Button>Add client</Button>} onSaved={refresh} />
       </div>
 
       <Table>
@@ -70,6 +75,7 @@ export default function ClientsPage() {
                       trigger={
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
                       }
+                      onSaved={refresh}
                     />
                     <DropdownMenuItem variant="destructive" onSelect={() => handleDelete(c.id)}>
                       Delete

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { subscribeClients, subscribeProjects, deleteProject } from "@/lib/firestore";
+import { getClients, getProjects, deleteProject } from "@/lib/data";
 import type { Client, Project, ProjectStatus } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,9 +25,13 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [filter, setFilter] = useState<ProjectStatus | "all">("all");
 
+  const refresh = () => {
+    getClients().then(setClients);
+    getProjects().then(setProjects);
+  };
+
   useEffect(() => {
-    const unsubs = [subscribeClients(setClients), subscribeProjects(setProjects)];
-    return () => unsubs.forEach((u) => u());
+    refresh();
   }, []);
 
   const clientName = (id: string) => clients.find((c) => c.id === id)?.name ?? "—";
@@ -39,6 +43,7 @@ export default function ProjectsPage() {
   async function handleDelete(id: string) {
     if (!confirm("Delete this project?")) return;
     await deleteProject(id);
+    await refresh();
     toast.success("Project deleted");
   }
 
@@ -49,7 +54,7 @@ export default function ProjectsPage() {
           <h1 className="text-2xl font-semibold">Projects</h1>
           <p className="text-sm text-muted-foreground">Track budgets and completion status.</p>
         </div>
-        <ProjectFormDialog clients={clients} trigger={<Button>Add project</Button>} />
+        <ProjectFormDialog clients={clients} trigger={<Button>Add project</Button>} onSaved={refresh} />
       </div>
 
       <Select value={filter} onValueChange={(v) => setFilter(v as ProjectStatus | "all")}>
@@ -100,6 +105,7 @@ export default function ProjectsPage() {
                       trigger={
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
                       }
+                      onSaved={refresh}
                     />
                     <DropdownMenuItem variant="destructive" onSelect={() => handleDelete(p.id)}>
                       Delete

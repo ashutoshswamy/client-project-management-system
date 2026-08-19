@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { subscribeClients, subscribeProjects, subscribeInvoices, updateProject } from "@/lib/firestore";
+import { getClients, getProjects, getInvoices, updateProject } from "@/lib/data";
 import type { Client, Project, Invoice } from "@/lib/types";
 import { invoiceTotal } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { ProjectFormDialog } from "@/components/project-form-dialog";
 import { ProjectMembers } from "@/components/project-members";
+import { ProjectCommissions } from "@/components/project-commissions";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { formatCurrency } from "@/lib/currency";
@@ -21,13 +22,14 @@ export default function ProjectDetailPage(props: PageProps<"/projects/[id]">) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
+  const refresh = () => {
+    getClients().then(setClients);
+    getProjects().then(setProjects);
+    getInvoices().then(setInvoices);
+  };
+
   useEffect(() => {
-    const unsubs = [
-      subscribeClients(setClients),
-      subscribeProjects(setProjects),
-      subscribeInvoices(setInvoices),
-    ];
-    return () => unsubs.forEach((u) => u());
+    refresh();
   }, []);
 
   const project = projects.find((p) => p.id === id);
@@ -40,6 +42,7 @@ export default function ProjectDetailPage(props: PageProps<"/projects/[id]">) {
     if (!project) return;
     const status = project.status === "ongoing" ? "completed" : "ongoing";
     await updateProject(project.id, { status });
+    await refresh();
     toast.success(`Marked as ${status}`);
   }
 
@@ -62,6 +65,7 @@ export default function ProjectDetailPage(props: PageProps<"/projects/[id]">) {
             project={project}
             clients={clients}
             trigger={<Button variant="outline">Edit</Button>}
+            onSaved={refresh}
           />
         </div>
       </div>
@@ -102,7 +106,9 @@ export default function ProjectDetailPage(props: PageProps<"/projects/[id]">) {
         </Card>
       )}
 
-      <ProjectMembers project={project} />
+      <ProjectMembers project={project} onUpdated={refresh} />
+
+      <ProjectCommissions project={project} onUpdated={refresh} />
 
       <div>
         <div className="mb-3 flex items-center justify-between">
